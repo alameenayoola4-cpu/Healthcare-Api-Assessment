@@ -52,4 +52,4 @@ The PowerShell script fetches all patient pages with retry logic, computes the r
 
 ## Security Note
 
-If the API key was previously committed and pushed to GitHub, the safest next step is to remove it from the repository history or replace the repository with a clean one before sharing it publicly.
+The API key is loaded from a local `.env` file and is not intended to be committed to source control. The repository includes `.env.example` for local setup and `.gitignore` rules to keep local secrets out of tracked files.

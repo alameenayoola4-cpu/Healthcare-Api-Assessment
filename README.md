@@ -7,6 +7,29 @@ This repo now follows the scoring shown on the assessment page exactly:
 - Age: under `40` is `0`, `40-65` is `1`, over `65` is `2`
 - High-risk patients: total score `>= 4`
 
+## API Key
+
+The scripts do not store the API key in source control. They can read `DEMOMED_API_KEY`
+from a local `.env` file, from your shell environment, or from a passed argument.
+
+Create a local `.env` file in this folder:
+
+```dotenv
+DEMOMED_API_KEY=your-api-key-here
+```
+
+Or set the key as an environment variable before running:
+
+```powershell
+$env:DEMOMED_API_KEY="your-api-key-here"
+```
+
+You can also pass the key directly:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\assessment.ps1 -ApiKey "your-api-key-here"
+```
+
 Run the assessment client from this folder:
 
 ```powershell
@@ -25,4 +48,8 @@ Submit a previously saved payload without re-fetching patients:
 powershell -ExecutionPolicy Bypass -File .\assessment.ps1 -SubmitExistingResults
 ```
 
-The PowerShell script uses the provided API key by default, fetches all patient pages with retry logic, computes the required alert lists, and writes the payload to `assessment_results.json`.
+The PowerShell script fetches all patient pages with retry logic, computes the required alert lists, and writes the payload to `assessment_results.json`.
+
+## Security Note
+
+If the API key was previously committed and pushed to GitHub, the safest next step is to remove it from the repository history or replace the repository with a clean one before sharing it publicly.

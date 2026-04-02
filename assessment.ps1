@@ -1,5 +1,5 @@
 param(
-    [string]$ApiKey = "ak_72fa9004e6bdfe98b2aa907d95965eb72cbd191fb5decc7f",
+    [string]$ApiKey = $env:DEMOMED_API_KEY,
     [switch]$Submit,
     [switch]$UseLocalAnalysis,
     [switch]$SubmitExistingResults
@@ -16,6 +16,47 @@ $Headers = @{
     "x-api-key" = $ApiKey
     "Accept"    = "application/json"
 }
+
+function Get-DotEnvValue {
+    param(
+        [string]$Path,
+        [string]$Key
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return $null
+    }
+
+    foreach ($line in Get-Content -LiteralPath $Path) {
+        $trimmed = $line.Trim()
+        if ([string]::IsNullOrWhiteSpace($trimmed) -or $trimmed.StartsWith("#")) {
+            continue
+        }
+
+        $parts = $trimmed.Split("=", 2)
+        if ($parts.Count -ne 2) {
+            continue
+        }
+
+        if ($parts[0].Trim() -ne $Key) {
+            continue
+        }
+
+        return $parts[1].Trim().Trim("'`"")
+    }
+
+    return $null
+}
+
+if ([string]::IsNullOrWhiteSpace($ApiKey)) {
+    $ApiKey = Get-DotEnvValue -Path (Join-Path $PSScriptRoot ".env") -Key "DEMOMED_API_KEY"
+}
+
+if ([string]::IsNullOrWhiteSpace($ApiKey)) {
+    throw "API key is required. Pass -ApiKey, set DEMOMED_API_KEY, or add DEMOMED_API_KEY to .env."
+}
+
+$Headers["x-api-key"] = $ApiKey
 
 function Get-PropertyValue {
     param(

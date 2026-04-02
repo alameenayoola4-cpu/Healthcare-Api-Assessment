@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import random
 import sys
 import time
@@ -13,8 +14,9 @@ from urllib import request
 
 
 BASE_URL = "https://assessment.ksensetech.com/api"
-DEFAULT_API_KEY = "ak_72fa9004e6bdfe98b2aa907d95965eb72cbd191fb5decc7f"
+DEFAULT_API_KEY = os.environ.get("DEMOMED_API_KEY")
 OUTPUT_PATH = Path(__file__).with_name("assessment_results.json")
+DOTENV_PATH = Path(__file__).with_name(".env")
 DEFAULT_LIMIT = 20
 MAX_RETRIES = 6
 MAX_PAGES = 50
@@ -105,6 +107,22 @@ def _retry_delay(attempt: int, retry_after: Optional[str] = None) -> float:
         except ValueError:
             pass
     return min(1.0 * (2 ** (attempt - 1)) + random.uniform(0.0, 0.25), 8.0)
+
+
+def load_dotenv_api_key(path: Path = DOTENV_PATH) -> Optional[str]:
+    if not path.exists():
+        return None
+
+    for line in path.read_text(encoding="utf-8").splitlines():
+        text = line.strip()
+        if not text or text.startswith("#") or "=" not in text:
+            continue
+        key, value = text.split("=", 1)
+        if key.strip() != "DEMOMED_API_KEY":
+            continue
+        cleaned = value.strip().strip("'\"")
+        return cleaned or None
+    return None
 
 
 def fetch_all_patients(client: ApiClient, limit: int = DEFAULT_LIMIT) -> list[dict[str, Any]]:
@@ -305,6 +323,14 @@ def main() -> int:
         help="Submit the generated alert lists to the assessment endpoint",
     )
     args = parser.parse_args()
+
+    if not args.api_key:
+        args.api_key = load_dotenv_api_key()
+
+    if not args.api_key:
+        raise RuntimeError(
+            "API key is required. Pass --api-key, set DEMOMED_API_KEY, or add DEMOMED_API_KEY to .env."
+        )
 
     client = ApiClient(api_key=args.api_key)
     patients = fetch_all_patients(client)
